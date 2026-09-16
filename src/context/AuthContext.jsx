@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Make sure a matching users/{uid} doc exists (important for Google sign-in)
         const userRef = doc(db, "users", firebaseUser.uid);
         const snap = await getDoc(userRef);
         if (!snap.exists()) {
