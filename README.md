@@ -14,7 +14,7 @@ WildCrew is a full-stack web application designed for outdoor enthusiasts, group
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Tech Stack](#%EF%B8%8F-tech-stack)
@@ -77,7 +77,7 @@ Organizing group outdoor activities often involves fragmented communication acro
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Capabilities (Must-Have)
 
