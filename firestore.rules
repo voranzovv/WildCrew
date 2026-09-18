@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read any profile, but only edit their own
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Events: anyone logged in can read; only the organizer can create/edit/delete,
+    // except for headcount/likeCount which the app updates on behalf of other users
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.organizerId == request.auth.uid;
+
+      allow update: if request.auth != null
+        && (
+          resource.data.organizerId == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(["currentHeadcount", "likeCount"])
+        );
+
+      allow delete: if request.auth != null
+        && resource.data.organizerId == request.auth.uid;
+
+      // Likes subcollection: a user can only create/delete their own like
+      match /likes/{userId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Comments subcollection: anyone logged in can post; only the author can delete
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if request.auth != null
+          && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // Join requests: requester and organizer can read theirs;
+    // only the requester can create; only the organizer can update status
+    match /joinRequests/{requestId} {
+      allow read: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || resource.data.organizerId == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+        && resource.data.organizerId == request.auth.uid;
+    }
+  }
+}

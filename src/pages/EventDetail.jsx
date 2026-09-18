@@ -86,6 +86,11 @@ export default function EventDetail() {
         ← Back to Feed
       </button>
 
+      <img
+        src={event.image || "/placeholder.png"}
+        className="img-fluid mb-3"
+        alt={event.title}
+      />
       <h2>{event.title}</h2>
       <p className="text-muted mb-1">{event.location}</p>
       <p className="mb-1">

@@ -10,6 +10,7 @@ import { addDoc, collection, getDocs } from "firebase/firestore"; // Import v9 f
 import { db } from "./firebase";
 import Navbar from "./Components/NavBar";
 import getSampleEvents from "./data/sampleData";
+import Profile from "./pages/Profile";
 
 export default function App() {
   const [students, setStudents] = useState([]);
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
 
           <Route path="/create" element={<CreateEvent />} />
+          <Route path="/Profile" element={<Profile />} />
         </Routes>
       </BrowserRouter>
     </>

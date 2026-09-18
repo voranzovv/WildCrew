@@ -31,7 +31,7 @@ function UserMenu({ user, onLogout }) {
           </div>
         )}
         <span className="text-dark fw-medium pe-1" style={{ fontSize: "1rem" }}>
-          {user.displayName || user.email}
+          <Link to="/profile">{user.displayName || user.email}</Link>
         </span>
       </div>
       <button

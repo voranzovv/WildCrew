@@ -9,6 +9,7 @@ import {
 import { Link } from "react-router-dom";
 import { db } from "../firebase";
 import EventCard from "../Components/EventCard";
+import Filter from "../Components/Filter";
 
 export default function Feed({ students }) {
   const [events, setEvents] = useState([]);
@@ -34,6 +35,7 @@ export default function Feed({ students }) {
 
   return (
     <div className="container py-5">
+      <Filter />
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Upcoming Events</h2>
         <Link to="/create" className="btn btn-primary">
