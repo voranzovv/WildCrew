@@ -15,12 +15,29 @@ export default function CreateEvent() {
     date: "",
     difficulty: "easy",
     maxHeadcount: 5,
+    description: "",
+    activityType: "hiking",
+    tags: [],
+    coverImage: "",
+    images: [],
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    console.log("Selected cover image:", file);
+    setForm({ ...form, coverImage: file });
+  };
+
+  const handleEventImageChange = (e) => {
+    const file = e.target.files[0];
+    console.log("Selected event image:", file);
+    setForm({ ...form, images: [file] });
   };
 
   const handleSubmit = async (e) => {
@@ -145,6 +162,55 @@ export default function CreateEvent() {
             className="form-control"
             defaultValue={5}
             onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Description</label>
+          <textarea
+            name="description"
+            className="form-control"
+            rows={3}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Activity Type</label>
+          <select
+            name="activityType"
+            className="form-select"
+            onChange={handleChange}
+          >
+            <option value="hiking">Hiking</option>
+            <option value="running">Running</option>
+            <option value="cycling">Cycling</option>
+            <option value="swimming">Swimming</option>
+          </select>
+        </div>
+        {/* cover image upload section */}
+        <div className="mb-3">
+          <label className="form-label">Cover Image</label>
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            className="form-control"
+            onChange={handleImageChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Event Image</label>
+          <input
+            name="eventImage"
+            type="file"
+            accept="image/*"
+            className="form-control"
+            onChange={handleEventImageChange}
             required
           />
         </div>

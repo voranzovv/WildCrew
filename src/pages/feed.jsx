@@ -61,6 +61,8 @@ export default function Feed({ students }) {
             likeCount={event.likeCount}
             image={event.image}
             id={event.id}
+            lng={event.lng}
+            lat={event.lat}
           />
         ))}
       </div>

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import TrailMap from "../Components/TrailMap";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -124,6 +125,8 @@ export default function EventDetail() {
       )}
 
       {message && <p className="mt-3 text-success">{message}</p>}
+
+      <TrailMap lat={event.lat} lng={event.lng} title={event.title} />
     </div>
   );
 }
