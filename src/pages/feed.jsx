@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { db } from "../firebase";
+import EventCard from "../Components/EventCard";
 
 export default function Feed({ students }) {
   const [events, setEvents] = useState([]);
@@ -49,29 +50,18 @@ export default function Feed({ students }) {
 
       <div className="row g-4">
         {events.map((event) => (
-          <div className="col-md-4" key={event.id}>
-            <Link
-              to={`/event/${event.id}`}
-              className="text-decoration-none text-dark"
-            >
-              <div className="card h-100 shadow-sm">
-                <div className="card-body">
-                  <h5 className="card-title">{event.title}</h5>
-                  <p className="card-text mb-1">{event.location}</p>
-                  <p className="card-text mb-1">
-                    {event.date} &middot;{" "}
-                    <span className="text-capitalize">{event.difficulty}</span>
-                  </p>
-                  <p className="card-text mb-1">
-                    {event.currentHeadcount}/{event.maxHeadcount} joined
-                  </p>
-                  <p className="card-text text-muted small">
-                    ❤️ {event.likeCount || 0}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
+          <EventCard
+            title={event.title}
+            key={event.id}
+            location={event.location}
+            date={event.date}
+            difficulty={event.difficulty}
+            currentHeadcount={event.currentHeadcount}
+            maxHeadcount={event.maxHeadcount}
+            likeCount={event.likeCount}
+            image={event.image}
+            id={event.id}
+          />
         ))}
       </div>
     </div>

@@ -6,8 +6,10 @@ import Feed from "./pages/feed";
 import EventDetail from "./pages/EventDetail";
 import Dashboard from "./pages/Dashboard";
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore"; // Import v9 functions
+import { addDoc, collection, getDocs } from "firebase/firestore"; // Import v9 functions
 import { db } from "./firebase";
+import Navbar from "./Components/NavBar";
+import getSampleEvents from "./data/sampleData";
 
 export default function App() {
   const [students, setStudents] = useState([]);
@@ -35,18 +37,37 @@ export default function App() {
     fetchStudents();
   }, []);
 
+  const addSampleEvents = async () => {
+    try {
+      const events = getSampleEvents();
+      console.log("Adding sample events to Firestore...", events);
+      await Promise.all(
+        events.map(async (event) => {
+          await addDoc(collection(db, "events"), event);
+        }),
+      );
+      alert("Sample events added successfully!");
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    }
+  };
+
   return (
     <>
-      <h1>Students List</h1>
+      {/* <h1>Students List</h1>
       <ul>
         {students.map((student) => (
           <li key={student.Name}>
             {student.Name} - {student.Age}
           </li>
         ))}
-      </ul>
+      </ul> */}
 
       <BrowserRouter>
+        <Navbar />
+        <button className="btn btn-primary" onClick={addSampleEvents}>
+          Add sample events
+        </button>
         <Routes>
           <Route path="/login" element={<Login />} />
 
