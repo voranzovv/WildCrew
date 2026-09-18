@@ -61,7 +61,7 @@ export default function Feed({ students }) {
             currentHeadcount={event.currentHeadcount}
             maxHeadcount={event.maxHeadcount}
             likeCount={event.likeCount}
-            image={event.image}
+            coverImage={event.coverImage}
             id={event.id}
             lng={event.lng}
             lat={event.lat}

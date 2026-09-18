@@ -9,7 +9,7 @@ function EventCard({
   currentHeadcount,
   maxHeadcount,
   likeCount,
-  image,
+  coverImage,
   id,
 }) {
   return (
@@ -17,7 +17,7 @@ function EventCard({
       <Link to={`/event/${id}`} className="text-decoration-none text-dark">
         <div className="card h-100 shadow-sm">
           <img
-            src={image || auth.currentUser.photoURL}
+            src={coverImage || auth.currentUser.photoURL}
             className="card-img-top"
             alt={title}
           />

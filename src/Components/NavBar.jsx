@@ -64,12 +64,6 @@ export default function Navbar() {
           className="navbar-brand fw-bold d-flex align-items-center gap-2"
           to={user ? "/feed" : "/login"}
         >
-          <span
-            className="d-flex align-items-center justify-content-center rounded-circle bg-success text-white"
-            style={{ width: 46, height: 46, fontSize: "1.5rem" }}
-          >
-            🏕️
-          </span>
           <span style={{ color: "#2f6b3a", fontSize: "1.6rem" }}>WildCrew</span>
         </Link>
 

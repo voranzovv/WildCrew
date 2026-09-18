@@ -1,26 +1,24 @@
 import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
 export default function CreateEvent() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     title: "",
     location: "",
-    lat: "",
-    lng: "",
     date: "",
     difficulty: "easy",
     maxHeadcount: 5,
     description: "",
     activityType: "hiking",
-    tags: [],
-    coverImage: "",
-    images: [],
   });
+  const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,204 +26,167 @@ export default function CreateEvent() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    console.log("Selected cover image:", file);
-    setForm({ ...form, coverImage: file });
-  };
-
-  const handleEventImageChange = (e) => {
-    const file = e.target.files[0];
-    console.log("Selected event image:", file);
-    setForm({ ...form, images: [file] });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     if (new Date(form.date) < new Date().setHours(0, 0, 0, 0)) {
-      setError("Event date can't be in the past.");
-      return;
-    }
-    if (Number(form.maxHeadcount) < 1) {
-      setError("Max headcount must be at least 1.");
+      setError("Event date cannot be in the past.");
       return;
     }
 
     setLoading(true);
+
     try {
+      let imageUrl = "";
+
+      if (file) {
+        const imageRef = ref(storage, `eventImages/${Date.now()}_${file.name}`);
+        await uploadBytes(imageRef, file);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+
       await addDoc(collection(db, "events"), {
         ...form,
-        lat: Number(form.lat),
-        lng: Number(form.lng),
         maxHeadcount: Number(form.maxHeadcount),
         currentHeadcount: 0,
-        likeCount: 0,
+        coverImage: imageUrl,
         organizerId: user.uid,
         organizerName: user.displayName || user.email,
-        status: "open",
         createdAt: serverTimestamp(),
       });
+
       navigate("/feed");
     } catch (err) {
-      setError(err.message);
+      setError(err);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="container py-5" style={{ maxWidth: "600px" }}>
-      <h2 className="mb-4">Create an Event</h2>
+  if (authLoading) return <div className="text-center py-5">Loading...</div>;
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Event Title</label>
+  if (!user) {
+    return (
+      <div className="text-center py-5">
+        <h4>Please log in to create an event.</h4>
+        <button
+          className="btn btn-success mt-2"
+          onClick={() => navigate("/login")}
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-5" style={{ maxWidth: "500px" }}>
+      <h2 className="mb-4">Create Event</h2>
+
+      <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        <div>
+          <label className="form-label">Title</label>
           <input
             name="title"
             className="form-control"
-            placeholder="e.g. Sunrise hike at Blue Mountain"
+            placeholder="Sunrise Hike"
             onChange={handleChange}
             required
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Location Name</label>
+        <div>
+          <label className="form-label">Location</label>
           <input
             name="location"
             className="form-control"
-            placeholder="e.g. Blue Mountain Trailhead"
+            placeholder="Blue Mountain Trailhead"
             onChange={handleChange}
             required
           />
         </div>
 
-        <div className="row mb-3">
+        <div className="row g-2">
           <div className="col">
-            <label className="form-label">Latitude</label>
+            <label className="form-label">Date</label>
             <input
-              name="lat"
-              type="number"
-              step="any"
+              name="date"
+              type="date"
               className="form-control"
-              placeholder="e.g. 43.6532"
               onChange={handleChange}
               required
             />
           </div>
           <div className="col">
-            <label className="form-label">Longitude</label>
+            <label className="form-label">Max Attendees</label>
             <input
-              name="lng"
+              name="maxHeadcount"
               type="number"
-              step="any"
+              min="1"
+              value={form.maxHeadcount}
               className="form-control"
-              placeholder="e.g. -79.3832"
               onChange={handleChange}
               required
             />
           </div>
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Date</label>
-          <input
-            name="date"
-            type="date"
-            className="form-control"
-            onChange={handleChange}
-            required
-          />
+        <div className="row g-2">
+          <div className="col">
+            <label className="form-label">Activity</label>
+            <select
+              name="activityType"
+              value={form.activityType}
+              className="form-select"
+              onChange={handleChange}
+            >
+              <option value="hiking">Hiking</option>
+              <option value="running">Running</option>
+              <option value="cycling">Cycling</option>
+              <option value="swimming">Swimming</option>
+            </select>
+          </div>
+          <div className="col">
+            <label className="form-label">Difficulty</label>
+            <select
+              name="difficulty"
+              value={form.difficulty}
+              className="form-select"
+              onChange={handleChange}
+            >
+              <option value="easy">Easy</option>
+              <option value="moderate">Moderate</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Difficulty</label>
-          <select
-            name="difficulty"
-            className="form-select"
-            onChange={handleChange}
-          >
-            <option value="easy">Easy</option>
-            <option value="moderate">Moderate</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="form-label">Max Headcount</label>
-          <input
-            name="maxHeadcount"
-            type="number"
-            min="1"
-            className="form-control"
-            defaultValue={5}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
+        <div>
           <label className="form-label">Description</label>
           <textarea
             name="description"
-            className="form-control"
             rows={3}
+            className="form-control"
             onChange={handleChange}
             required
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Activity Type</label>
-          <select
-            name="activityType"
-            className="form-select"
-            onChange={handleChange}
-          >
-            <option value="hiking">Hiking</option>
-            <option value="running">Running</option>
-            <option value="cycling">Cycling</option>
-            <option value="swimming">Swimming</option>
-          </select>
-        </div>
-        {/* cover image upload section */}
-        <div className="mb-3">
+        <div>
           <label className="form-label">Cover Image</label>
           <input
-            name="image"
             type="file"
             accept="image/*"
             className="form-control"
-            onChange={handleImageChange}
+            onChange={(e) => setFile(e.target.files[0])}
             required
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Event Image</label>
-          <input
-            name="eventImage"
-            type="file"
-            accept="image/*"
-            className="form-control"
-            onChange={handleEventImageChange}
-            required
-          />
-        </div>
+        {error && <div className="alert alert-danger py-2 small">{error}</div>}
 
-        {error && (
-          <div className="alert alert-danger py-2 small" role="alert">
-            {error}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="btn btn-primary w-100"
-          disabled={loading}
-        >
+        <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? "Creating..." : "Create Event"}
         </button>
       </form>
