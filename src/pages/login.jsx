@@ -46,6 +46,7 @@ export default function Login() {
       navigate("/feed");
     } catch (err) {
       setError(err.message);
+      console.log(err);
     } finally {
       setLoading(false);
     }
