@@ -92,12 +92,12 @@ export default function Login() {
           </h1>
           <p className="fs-5 text-white-50 mb-0" style={{ maxWidth: "380px" }}>
             Create trips, join hikes, and connect with people who love the
-            outdoors as much as you do.
+            outdoor activit y.
           </p>
         </div>
 
         <p className="text-white-50 small mb-0">
-          &copy; {new Date().getFullYear()} WildCrew
+          copy right; {new Date().getFullYear()} WildCrew
         </p>
       </div>
 
@@ -111,9 +111,7 @@ export default function Login() {
             <span
               className="d-flex align-items-center justify-content-center rounded-circle bg-success text-white"
               style={{ width: 40, height: 40, fontSize: "1.3rem" }}
-            >
-              🏕️
-            </span>
+            ></span>
             <span
               className="fw-bold"
               style={{ color: "#2f6b3a", fontSize: "1.4rem" }}
