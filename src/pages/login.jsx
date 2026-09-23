@@ -16,7 +16,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Helper: Create user profile in Firestore if it doesn't exist
   const createUserProfile = async (user) => {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
@@ -57,9 +56,11 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await signInWithPopup(auth, googleProvider);
+      console.log(res);
       await createUserProfile(res.user);
       navigate("/feed");
     } catch (err) {
+      console.log(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -73,7 +74,7 @@ export default function Login() {
         className="d-none d-lg-flex flex-column justify-content-between text-white p-5"
         style={{
           width: "45%",
-          background: "linear-gradient(160deg, #2f6b3a 0%, #1f4d29 100%)",
+          background: "green",
         }}
       >
         <div className="d-flex align-items-center gap-2">
@@ -148,7 +149,7 @@ export default function Login() {
               <input
                 type="password"
                 className="form-control form-control-lg rounded-3"
-                placeholder="••••••••"
+                placeholder="......."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -189,7 +190,7 @@ export default function Login() {
           )}
 
           <p className="text-center text-muted mt-4 mb-0">
-            {isSignUp ? "Already have an account?" : "New here?"}{" "}
+            {isSignUp ? "Already have an account?" : "New here?"}
             <span
               onClick={() => setIsSignUp(!isSignUp)}
               className="fw-medium"

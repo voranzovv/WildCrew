@@ -25,7 +25,7 @@ function EventCard({
             <h5 className="card-title">{title}</h5>
             <p className="card-text mb-1">{location}</p>
             <p className="card-text mb-1">
-              {date} &middot;{" "}
+              {date}
               <span className="text-capitalize">{difficulty}</span>
             </p>
             <p className="card-text mb-1">
