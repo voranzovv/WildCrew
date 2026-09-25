@@ -105,7 +105,7 @@ export default function Login() {
           </h1>
           <p className="fs-5 text-white-50 mb-0" style={{ maxWidth: "380px" }}>
             Create trips, join hikes, and connect with people who love the
-            outdoor activit y.
+            outdoor activitys.
           </p>
         </div>
 

@@ -18,7 +18,9 @@ export default function CreateEvent() {
     description: "",
     activityType: "hiking",
   });
+
   const [file, setFile] = useState(null);
+  const [galleryFiles, setGalleryFiles] = useState([]); // Array of raw File objects
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -38,19 +40,36 @@ export default function CreateEvent() {
     setLoading(true);
 
     try {
+      // 1. Upload Cover Image
       let imageUrl = "";
-
       if (file) {
         const imageRef = ref(storage, `eventImages/${Date.now()}_${file.name}`);
         await uploadBytes(imageRef, file);
         imageUrl = await getDownloadURL(imageRef);
       }
 
+      // 2. Upload Gallery Images
+      let galleryUrls = [];
+      if (galleryFiles.length > 0) {
+        galleryUrls = await Promise.all(
+          galleryFiles.map(async (img) => {
+            const imgRef = ref(
+              storage,
+              `eventGallery/${Date.now()}_${img.name}`,
+            );
+            await uploadBytes(imgRef, img);
+            return await getDownloadURL(imgRef);
+          }),
+        );
+      }
+
+      // 3. Save Document with returned URLs
       await addDoc(collection(db, "events"), {
         ...form,
         maxHeadcount: Number(form.maxHeadcount),
         currentHeadcount: 0,
         coverImage: imageUrl,
+        gallery: galleryUrls, // Directly assign uploaded URL array
         organizerId: user.uid,
         organizerName: user.displayName || user.email,
         createdAt: serverTimestamp(),
@@ -58,7 +77,7 @@ export default function CreateEvent() {
 
       navigate("/feed");
     } catch (err) {
-      setError(err);
+      setError(err.message || "Failed to create event.");
     } finally {
       setLoading(false);
     }
@@ -181,6 +200,17 @@ export default function CreateEvent() {
             className="form-control"
             onChange={(e) => setFile(e.target.files[0])}
             required
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Additional Images</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="form-control"
+            multiple
+            onChange={(e) => setGalleryFiles(Array.from(e.target.files))}
           />
         </div>
 

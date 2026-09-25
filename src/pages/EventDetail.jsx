@@ -82,18 +82,22 @@ export default function EventDetail() {
         className="btn btn-link ps-0 mb-3"
         onClick={() => navigate("/feed")}
       >
-        ← Back to Feed
+        Back to Feed
       </button>
 
-      <img
-        src={event.coverImage || "/placeholder.png"}
-        className="img-fluid mb-3"
-        alt={event.title}
-      />
+      <div className="container " style={{ maxHeight: "100px" }}>
+        {event.coverImage && (
+          <img
+            src={event.coverImage}
+            className="img-fluid mb-3"
+            alt={event.title}
+          />
+        )}
+      </div>
       <h2>{event.title}</h2>
       <p className="text-muted mb-1">{event.location}</p>
       <p className="mb-1">
-        {event.date} &middot;{" "}
+        {event.date}
         <span className="text-capitalize">{event.difficulty}</span>
       </p>
       <p className="mb-3">
@@ -101,6 +105,21 @@ export default function EventDetail() {
           {event.currentHeadcount}/{event.maxHeadcount} joined
         </span>
       </p>
+      <p>{event.description}</p>
+      <div className="container">
+        <div className="row">
+          {event.gallery &&
+            event.gallery.map((imgUrl, index) => (
+              <div className="col-md-4 mb-3" key={index}>
+                <img
+                  src={imgUrl}
+                  className="img-fluid rounded"
+                  alt={`Gallery ${index + 1}`}
+                />
+              </div>
+            ))}
+        </div>
+      </div>
 
       {isOrganizer && (
         <div className="alert alert-info">
