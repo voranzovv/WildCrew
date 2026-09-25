@@ -1,41 +1,97 @@
 import { Link } from "react-router-dom";
-import { auth } from "../firebase";
-import defaultProfile from "../assets/profile-default.png";
+import defaultCover from "../assets/profile-default.png"; // Fallback cover image
 
 function EventCard({
   title,
   location,
   date,
-  difficulty,
-  currentHeadcount,
-  maxHeadcount,
-  likeCount,
+  difficulty = "easy",
+  currentHeadcount = 0,
+  maxHeadcount = 0,
+  likeCount = 0,
   coverImage,
   id,
 }) {
+  // Color mapping for difficulty badges
+  const difficultyBadges = {
+    easy: "bg-success-subtle text-success border-success-subtle",
+    moderate: "bg-warning-subtle text-warning border-warning-subtle",
+    hard: "bg-danger-subtle text-danger border-danger-subtle",
+  };
+
+  const isFull = currentHeadcount >= maxHeadcount && maxHeadcount > 0;
+
   return (
-    <div className="col-md-4" key={id}>
+    <div className="col-12 col-sm-6 col-md-4 mb-4">
       <Link to={`/event/${id}`} className="text-decoration-none text-dark">
-        <div className="card h-100 shadow-sm">
-          <img
-            src={coverImage || auth.currentUser.photoURL || defaultProfile}
-            className="card-img-top"
-            alt={title}
-          />
-          <div className="card-body">
-            <h5 className="card-title">{title}</h5>
-            <p className="card-text mb-1">{location}</p>
-            <p className="card-text mb-1">
-              {date}
-              <span className="text-capitalize">{difficulty}</span>
-            </p>
-            <p className="card-text mb-1">
-              {currentHeadcount}/{maxHeadcount} joined
-            </p>
-            <p className="card-text text-muted small">
-              <i className="bi bi-hand-thumbs-up"></i>
-              {likeCount || 0}
-            </p>
+        <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover transition-all">
+          {/* Image Container with Floating Badges */}
+          <div
+            className="position-relative bg-light"
+            style={{ height: "200px" }}
+          >
+            <img
+              src={coverImage || defaultCover}
+              className="w-100 h-100 object-fit-cover"
+              alt={title}
+              onError={(e) => {
+                e.target.src = defaultCover;
+              }}
+            />
+
+            {/* Difficulty Badge (Top Right) */}
+            <div className="position-absolute top-0 end-0 m-3">
+              <span
+                className={`badge border px-3 py-2 rounded-pill text-capitalize fw-semibold shadow-sm ${
+                  difficultyBadges[difficulty] || "bg-secondary text-white"
+                }`}
+              >
+                {difficulty}
+              </span>
+            </div>
+
+            {/* Event Full Overlay (Top Left) */}
+            {isFull && (
+              <div className="position-absolute top-0 start-0 m-3">
+                <span className="badge bg-dark text-white px-3 py-2 rounded-pill fw-normal shadow-sm">
+                  FULL
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Card Body */}
+          <div className="card-body d-flex flex-column justify-content-between p-3">
+            <div>
+              <h5
+                className="card-title fw-bold text-truncate mb-2"
+                title={title}
+              >
+                {title}
+              </h5>
+
+              <p className="card-text text-secondary small mb-1 text-truncate">
+                {location || "Location TBD"}
+              </p>
+
+              <p className="card-text text-muted small mb-3">
+                {date || "Date TBD"}
+              </p>
+            </div>
+
+            {/* Footer Metadata Bar */}
+            <div className="d-flex align-items-center justify-content-between pt-2 border-top border-light-subtle mt-auto">
+              {/* Headcount */}
+              <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1.5 rounded-pill small">
+                {currentHeadcount}/{maxHeadcount} joined
+              </span>
+
+              {/* Like Counter */}
+              <div className="d-flex align-items-center text-muted small gap-1 fw-semibold">
+                <span className="b"></span>
+                <span>{likeCount}</span>
+              </div>
+            </div>
           </div>
         </div>
       </Link>
