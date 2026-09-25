@@ -82,6 +82,26 @@ export default function EventDetail() {
     }
   };
 
+  const handleLike = async () => {
+    if (!user) {
+      setMessage("You must be logged in to like an event.");
+      return;
+    }
+
+    try {
+      const eventRef = doc(db, "events", id);
+      await addDoc(collection(eventRef, "likes"), {
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      setMessage("You liked this event!");
+    } catch (err) {
+      setMessage(
+        "Something went wrong: " + (err.message || "Failed to like event."),
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-5 text-center">
@@ -229,6 +249,21 @@ export default function EventDetail() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* like and comment section */}
+        <div className="card-body">
+          <div className="d-flex align-items-center justify-content-between">
+            <button
+              className="btn btn-outline-secondary border-0 shadow-sm"
+              onClick={handleLike}
+            >
+              <i className="bi bi-heart"></i> Like
+            </button>
+            <button className="btn btn-outline-secondary border-0 shadow-sm">
+              <i className="bi bi-chat"></i> Comment
+            </button>
+          </div>
         </div>
 
         {/* Action Footer */}
