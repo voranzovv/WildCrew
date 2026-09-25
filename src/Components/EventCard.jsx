@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { auth } from "../firebase";
+import defaultProfile from "../assets/profile-default.png";
 
 function EventCard({
   title,
@@ -17,7 +18,7 @@ function EventCard({
       <Link to={`/event/${id}`} className="text-decoration-none text-dark">
         <div className="card h-100 shadow-sm">
           <img
-            src={coverImage || auth.currentUser.photoURL}
+            src={coverImage || auth.currentUser.photoURL || defaultProfile}
             className="card-img-top"
             alt={title}
           />
@@ -32,7 +33,7 @@ function EventCard({
               {currentHeadcount}/{maxHeadcount} joined
             </p>
             <p className="card-text text-muted small">
-              <i class="bi bi-hand-thumbs-up"></i>
+              <i className="bi bi-hand-thumbs-up"></i>
               {likeCount || 0}
             </p>
           </div>

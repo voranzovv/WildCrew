@@ -11,13 +11,13 @@ import { db } from "../firebase";
 import EventCard from "../Components/EventCard";
 import Filter from "../Components/Filter";
 
-export default function Feed({ students }) {
+export default function Feed() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  console.log(students);
-
   useEffect(() => {
+    const d = new Date();
+    console.log("date full", d);
     const today = new Date().toISOString().split("T")[0];
     const q = query(
       collection(db, "events"),

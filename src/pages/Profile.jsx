@@ -1,6 +1,7 @@
 import { auth } from "../firebase";
 
 function Profile() {
+  console.log(auth);
   return (
     <div>
       <h1>Profile Page</h1>

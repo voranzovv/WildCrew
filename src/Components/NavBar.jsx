@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import defaultProfile from "../assets/profile-default.png";
 
 const NAV_LINKS = [
   { to: "/feed", label: "Feed" },
@@ -15,7 +16,7 @@ function UserMenu({ user, onLogout }) {
       <div className="d-flex align-items-center gap-2 bg-light rounded-pill px-3 py-2">
         {user.photoURL ? (
           <img
-            src={user.photoURL}
+            src={user.photoURL || defaultProfile}
             alt={user.displayName || user.email}
             className="rounded-circle"
             width={38}
