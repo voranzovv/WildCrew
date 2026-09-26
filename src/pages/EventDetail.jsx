@@ -3,15 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   doc,
   getDoc,
+  setDoc,
   collection,
   addDoc,
   query,
   where,
   getDocs,
   serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import Map from "../Components/Map";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -23,13 +26,19 @@ export default function EventDetail() {
   const [alreadyRequested, setAlreadyRequested] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [message, setMessage] = useState("");
+  const [liked, setLiked] = useState(false);
 
+  // Load event
   useEffect(() => {
     const loadEvent = async () => {
       try {
         const snap = await getDoc(doc(db, "events", id));
+
         if (snap.exists()) {
-          setEvent({ id: snap.id, ...snap.data() });
+          setEvent({
+            id: snap.id,
+            ...snap.data(),
+          });
         }
       } catch (err) {
         console.error("Error loading event:", err);
@@ -37,30 +46,56 @@ export default function EventDetail() {
         setLoading(false);
       }
     };
+
     loadEvent();
   }, [id]);
 
+  // Check existing join request
   useEffect(() => {
     const checkExistingRequest = async () => {
       if (!user) return;
+
       try {
         const q = query(
           collection(db, "joinRequests"),
           where("eventId", "==", id),
           where("userId", "==", user.uid),
         );
+
         const snap = await getDocs(q);
+
         setAlreadyRequested(!snap.empty);
       } catch (err) {
         console.error("Error checking requests:", err);
       }
     };
+
     checkExistingRequest();
   }, [id, user]);
 
+  // Check if current user already liked the event
+  useEffect(() => {
+    const checkExistingLike = async () => {
+      if (!user || !id) return;
+
+      try {
+        const likeRef = doc(db, "events", id, "likes", user.uid);
+        const snap = await getDoc(likeRef);
+
+        setLiked(snap.exists());
+      } catch (err) {
+        console.error("Error checking like:", err);
+      }
+    };
+
+    checkExistingLike();
+  }, [id, user]);
+
+  // Request to join event
   const handleRequestToJoin = async () => {
     setRequesting(true);
     setMessage("");
+
     try {
       await addDoc(collection(db, "joinRequests"), {
         eventId: id,
@@ -71,6 +106,7 @@ export default function EventDetail() {
         status: "pending",
         createdAt: serverTimestamp(),
       });
+
       setAlreadyRequested(true);
       setMessage("Request sent! The organizer will review it soon.");
     } catch (err) {
@@ -82,6 +118,7 @@ export default function EventDetail() {
     }
   };
 
+  // Like / Unlike event
   const handleLike = async () => {
     if (!user) {
       setMessage("You must be logged in to like an event.");
@@ -89,19 +126,30 @@ export default function EventDetail() {
     }
 
     try {
-      const eventRef = doc(db, "events", id);
-      await addDoc(collection(eventRef, "likes"), {
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-      });
-      setMessage("You liked this event!");
+      const likeRef = doc(db, "events", id, "likes", user.uid);
+
+      if (liked) {
+        await deleteDoc(likeRef);
+
+        setLiked(false);
+        setMessage("You unliked this event!");
+      } else {
+        await setDoc(likeRef, {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+        });
+
+        setLiked(true);
+        setMessage("You liked this event!");
+      }
     } catch (err) {
       setMessage(
-        "Something went wrong: " + (err.message || "Failed to like event."),
+        "Something went wrong: " + (err.message || "Failed to update like."),
       );
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="container py-5 text-center">
@@ -112,13 +160,16 @@ export default function EventDetail() {
     );
   }
 
+  // Event not found
   if (!event) {
     return (
       <div className="container py-5 text-center">
         <h3 className="fw-bold">Event Not Found</h3>
+
         <p className="text-muted">
           The event you are looking for does not exist or has been removed.
         </p>
+
         <button
           className="btn btn-outline-primary mt-2"
           onClick={() => navigate("/feed")}
@@ -132,7 +183,6 @@ export default function EventDetail() {
   const isFull = event.currentHeadcount >= event.maxHeadcount;
   const isOrganizer = user?.uid === event.organizerId;
 
-  // Difficulty badge colors
   const difficultyBadges = {
     easy: "bg-success-subtle text-success border-success-subtle",
     moderate: "bg-warning-subtle text-warning border-warning-subtle",
@@ -169,14 +219,18 @@ export default function EventDetail() {
             <span className="badge bg-dark bg-opacity-75 backdrop-blur px-3 py-2 rounded-pill text-capitalize fw-normal">
               {event.activityType || "Outdoor"}
             </span>
+
             <span
-              className={`badge border px-3 py-2 rounded-pill text-capitalize fw-normal ${difficultyBadges[event.difficulty] || "bg-secondary text-white"}`}
+              className={`badge border px-3 py-2 rounded-pill text-capitalize fw-normal ${
+                difficultyBadges[event.difficulty] || "bg-secondary text-white"
+              }`}
             >
               {event.difficulty}
             </span>
           </div>
+
           <div className="position-absolute bottom-0 end-0 m-3 text-end">
-            <h1 className="fw-bold h2 mb-1"> {event.title}</h1>
+            <h1 className="fw-bold h2 mb-1">{event.title}</h1>
           </div>
         </div>
 
@@ -185,7 +239,11 @@ export default function EventDetail() {
           <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
             <div>
               <h1 className="fw-bold h2 mb-1">{event.title}</h1>
-              <p className="text-secondary mb-0 fs-6">{event.location}</p>
+
+              <p className="text-secondary mb-0 fs-6">
+                <i className="bi bi-geo-alt me-1"></i>
+                {event.address || event.location}
+              </p>
             </div>
 
             <div className="text-end">
@@ -197,20 +255,24 @@ export default function EventDetail() {
 
           <hr className="my-4 text-muted opacity-25" />
 
+          {/* Event Information */}
           <div className="row g-3 mb-4">
             <div className="col-sm-6">
               <div className="p-3 bg-light rounded-3 border border-light-subtle">
                 <small className="text-muted d-block uppercase tracking-wider mb-1">
                   Date & Time
                 </small>
+
                 <span className="fw-semibold text-dark">{event.date}</span>
               </div>
             </div>
+
             <div className="col-sm-6">
               <div className="p-3 bg-light rounded-3 border border-light-subtle">
                 <small className="text-muted d-block uppercase tracking-wider mb-1">
                   Organizer
                 </small>
+
                 <span className="fw-semibold text-dark">
                   {event.organizerName || "WildCrew Member"}
                 </span>
@@ -220,6 +282,7 @@ export default function EventDetail() {
 
           {/* About Section */}
           <h5 className="fw-bold mb-2">About this Activity</h5>
+
           <p
             className="text-secondary leading-relaxed mb-4"
             style={{ whiteSpace: "pre-line" }}
@@ -231,6 +294,7 @@ export default function EventDetail() {
           {event.gallery && event.gallery.length > 0 && (
             <div className="mt-4">
               <h5 className="fw-bold mb-3">Event Gallery</h5>
+
               <div className="row g-3">
                 {event.gallery.map((imgUrl, index) => (
                   <div className="col-6 col-md-4" key={index}>
@@ -251,15 +315,35 @@ export default function EventDetail() {
           )}
         </div>
 
-        {/* like and comment section */}
+        {/* Map Section */}
+        {event.longitude != null && event.latitude != null && (
+          <div className="card-body">
+            <h5 className="fw-bold mb-3">Location</h5>
+
+            <p className="text-secondary mb-3">
+              <i className="bi bi-geo-alt me-2"></i>
+              {event.address || event.location}
+            </p>
+
+            <Map lng={event.longitude} lat={event.latitude} />
+          </div>
+        )}
+
+        {/* Like and Comment Section */}
         <div className="card-body">
           <div className="d-flex align-items-center justify-content-between">
             <button
               className="btn btn-outline-secondary border-0 shadow-sm"
               onClick={handleLike}
             >
-              <i className="bi bi-heart"></i> Like
+              <i
+                className={`bi ${
+                  liked ? "bi-heart-fill text-danger" : "bi-heart"
+                }`}
+              ></i>{" "}
+              {liked ? "Liked" : "Like"}
             </button>
+
             <button className="btn btn-outline-secondary border-0 shadow-sm">
               <i className="bi bi-chat"></i> Comment
             </button>
@@ -281,10 +365,12 @@ export default function EventDetail() {
                 <h6 className="mb-0 fw-semibold">
                   Ready to join this adventure?
                 </h6>
+
                 <small className="text-muted">
                   The organizer will review your request once submitted.
                 </small>
               </div>
+
               <button
                 className="btn btn-primary btn-lg px-4 rounded-pill fw-semibold shadow-sm"
                 onClick={handleRequestToJoin}
@@ -307,7 +393,7 @@ export default function EventDetail() {
 
           {!isOrganizer && alreadyRequested && (
             <div className="alert alert-secondary border-0 shadow-sm m-0">
-              ⌛ You have already requested to join this event. Waiting for
+              You have already requested to join this event. Waiting for
               organizer approval.
             </div>
           )}

@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { formatAddress, searchAddresses } from "../helpers/addressHelpers";
+import { uploadImage } from "../helpers/storageHelpers";
 
 export default function CreateEvent() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
+  // Event form
   const [form, setForm] = useState({
     title: "",
+    address: "",
+    latitude: null,
+    longitude: null,
     location: "",
     date: "",
     difficulty: "easy",
@@ -19,62 +24,97 @@ export default function CreateEvent() {
     activityType: "hiking",
   });
 
+  // Address suggestions
+  const [autoCompletes, setAutoCompletes] = useState([]);
+
+  // Images
   const [file, setFile] = useState(null);
-  const [galleryFiles, setGalleryFiles] = useState([]); // Array of raw File objects
+  const [galleryFiles, setGalleryFiles] = useState([]);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
+  // Handle address search
+  const handleAddressChange = async (e) => {
+    const query = e.target.value;
+
+    // Update address field
+    setForm((e) => ({
+      ...e,
+      address: query,
+      latitude: null,
+      longitude: null,
+    }));
+
+    // Clear suggestions
+    if (!query.trim()) {
+      setAutoCompletes([]);
+      return;
+    }
+
+    try {
+      const results = await searchAddresses(query);
+
+      setAutoCompletes(results);
+    } catch (error) {
+      console.error("Address search error:", error);
+
+      setAutoCompletes([]);
+    }
+  };
+
+  // Submit event
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    // Check date
     if (new Date(form.date) < new Date().setHours(0, 0, 0, 0)) {
       setError("Event date cannot be in the past.");
+      return;
+    }
+
+    // Make sure an address was selected
+    if (form.latitude === null || form.longitude === null) {
+      setError("Please select an address from the suggestions.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1. Upload Cover Image
-      let imageUrl = "";
+      // Upload cover image
+      let coverImage = "";
+
       if (file) {
-        const imageRef = ref(storage, `eventImages/${Date.now()}_${file.name}`);
-        await uploadBytes(imageRef, file);
-        imageUrl = await getDownloadURL(imageRef);
+        coverImage = await uploadImage(file, "eventImages");
       }
 
-      // 2. Upload Gallery Images
-      let galleryUrls = [];
-      if (galleryFiles.length > 0) {
-        galleryUrls = await Promise.all(
-          galleryFiles.map(async (img) => {
-            const imgRef = ref(
-              storage,
-              `eventGallery/${Date.now()}_${img.name}`,
-            );
-            await uploadBytes(imgRef, img);
-            return await getDownloadURL(imgRef);
-          }),
-        );
-      }
+      // Upload gallery images
+      const gallery = await Promise.all(
+        galleryFiles.map((file) => uploadImage(file, "eventGallery")),
+      );
 
-      // 3. Save Document with returned URLs
+      // Save event to Firestore
       await addDoc(collection(db, "events"), {
         ...form,
         maxHeadcount: Number(form.maxHeadcount),
         currentHeadcount: 0,
-        coverImage: imageUrl,
-        gallery: galleryUrls, // Directly assign uploaded URL array
+        coverImage,
+        gallery,
         organizerId: user.uid,
         organizerName: user.displayName || user.email,
         createdAt: serverTimestamp(),
       });
 
+      // Go back to feed
       navigate("/feed");
     } catch (err) {
       setError(err.message || "Failed to create event.");
@@ -83,12 +123,17 @@ export default function CreateEvent() {
     }
   };
 
-  if (authLoading) return <div className="text-center py-5">Loading...</div>;
+  // Wait for authentication
+  if (authLoading) {
+    return <div className="text-center py-5">Loading...</div>;
+  }
 
+  // User must be logged in
   if (!user) {
     return (
       <div className="text-center py-5">
         <h4>Please log in to create an event.</h4>
+
         <button
           className="btn btn-success mt-2"
           onClick={() => navigate("/login")}
@@ -104,41 +149,104 @@ export default function CreateEvent() {
       <h2 className="mb-4">Create Event</h2>
 
       <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        {/* Title */}
         <div>
           <label className="form-label">Title</label>
+
           <input
             name="title"
             className="form-control"
             placeholder="Sunrise Hike"
+            value={form.title}
             onChange={handleChange}
             required
           />
         </div>
 
+        {/* Address */}
+        <div className="position-relative">
+          <label className="form-label">Address</label>
+
+          <input
+            name="address"
+            className="form-control"
+            placeholder="Toronto, Ontario, Canada"
+            value={form.address}
+            onChange={handleAddressChange}
+            required
+          />
+
+          {autoCompletes.length > 0 && (
+            <ul
+              className="list-group position-absolute w-100"
+              style={{
+                zIndex: 1000,
+              }}
+            >
+              {autoCompletes.map((feature, i) => {
+                const { properties, geometry } = feature;
+
+                const address = formatAddress(properties);
+
+                return (
+                  <li key={i} className="list-group-item p-0">
+                    <button
+                      type="button"
+                      className="list-group-item list-group-item-action border-0"
+                      onClick={() => {
+                        const [longitude, latitude] = geometry.coordinates;
+
+                        setForm((prev) => ({
+                          ...prev,
+                          address,
+                          latitude,
+                          longitude,
+                        }));
+
+                        setAutoCompletes([]);
+                      }}
+                    >
+                      {address}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Location */}
         <div>
           <label className="form-label">Location</label>
+
           <input
             name="location"
             className="form-control"
             placeholder="Blue Mountain Trailhead"
+            value={form.location}
             onChange={handleChange}
             required
           />
         </div>
 
+        {/* Date + Max Attendees */}
         <div className="row g-2">
           <div className="col">
             <label className="form-label">Date</label>
+
             <input
               name="date"
               type="date"
               className="form-control"
+              value={form.date}
               onChange={handleChange}
               required
             />
           </div>
+
           <div className="col">
             <label className="form-label">Max Attendees</label>
+
             <input
               name="maxHeadcount"
               type="number"
@@ -151,9 +259,11 @@ export default function CreateEvent() {
           </div>
         </div>
 
+        {/* Activity + Difficulty */}
         <div className="row g-2">
           <div className="col">
             <label className="form-label">Activity</label>
+
             <select
               name="activityType"
               value={form.activityType}
@@ -161,13 +271,18 @@ export default function CreateEvent() {
               onChange={handleChange}
             >
               <option value="hiking">Hiking</option>
+
               <option value="running">Running</option>
+
               <option value="cycling">Cycling</option>
+
               <option value="swimming">Swimming</option>
             </select>
           </div>
+
           <div className="col">
             <label className="form-label">Difficulty</label>
+
             <select
               name="difficulty"
               value={form.difficulty}
@@ -175,25 +290,32 @@ export default function CreateEvent() {
               onChange={handleChange}
             >
               <option value="easy">Easy</option>
+
               <option value="moderate">Moderate</option>
+
               <option value="hard">Hard</option>
             </select>
           </div>
         </div>
 
+        {/* Description */}
         <div>
           <label className="form-label">Description</label>
+
           <textarea
             name="description"
             rows={3}
             className="form-control"
+            value={form.description}
             onChange={handleChange}
             required
           />
         </div>
 
+        {/* Cover Image */}
         <div>
           <label className="form-label">Cover Image</label>
+
           <input
             type="file"
             accept="image/*"
@@ -203,8 +325,10 @@ export default function CreateEvent() {
           />
         </div>
 
+        {/* Additional Images */}
         <div>
           <label className="form-label">Additional Images</label>
+
           <input
             type="file"
             accept="image/*"
@@ -214,8 +338,10 @@ export default function CreateEvent() {
           />
         </div>
 
+        {/* Error */}
         {error && <div className="alert alert-danger py-2 small">{error}</div>}
 
+        {/* Submit */}
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? "Creating..." : "Create Event"}
         </button>

@@ -7,20 +7,33 @@ import EventDetail from "./pages/EventDetail";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./Components/NavBar";
 import Profile from "./pages/Profile";
+import { useAuth } from "./context/AuthContext";
+import ProtectedRoute from "./Components/ProtectedRoute";
 
 export default function App() {
+  const { user } = useAuth();
+  console.log("this is user", user);
   return (
     <>
       <BrowserRouter>
         <Navbar />
 
         <Routes>
+          <Route path="/" element={user ? <Feed /> : <Login />} />
+
           <Route path="/login" element={<Login />} />
 
           <Route path="/feed" element={<Feed />} />
           <Route path="/event/:id" element={<EventDetail />} />
 
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/create" element={<CreateEvent />} />
           <Route path="/Profile" element={<Profile />} />

@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
+      {/*  if loading is not true, render the children */}
       {!loading && children}
     </AuthContext.Provider>
   );

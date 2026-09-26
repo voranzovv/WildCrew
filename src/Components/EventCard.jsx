@@ -88,7 +88,7 @@ function EventCard({
 
               {/* Like Counter */}
               <div className="d-flex align-items-center text-muted small gap-1 fw-semibold">
-                <span className="b"></span>
+                <span className="bi bi-heart "></span>
                 <span>{likeCount}</span>
               </div>
             </div>

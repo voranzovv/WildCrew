@@ -28,7 +28,7 @@ function UserMenu({ user, onLogout }) {
             className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
             style={{ width: 38, height: 38, fontSize: "0.9rem" }}
           >
-            {(user.displayName || user.email || "?").charAt(0).toUpperCase()}
+            {(user.displayName || user.email).charAt(0).toUpperCase()}
           </div>
         )}
         <span className="text-dark fw-medium pe-1" style={{ fontSize: "1rem" }}>
