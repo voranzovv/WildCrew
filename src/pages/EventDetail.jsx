@@ -28,6 +28,7 @@ export default function EventDetail() {
   const [requesting, setRequesting] = useState(false);
   const [message, setMessage] = useState("");
   const [liked, setLiked] = useState(false);
+  const [weather, setWeather] = useState(null);
 
   // Load event
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function EventDetail() {
               snap.data().time,
             )
               .then((data) => {
+                setWeather(data);
                 console.log(data);
               })
               .catch((error) => {
@@ -253,9 +255,12 @@ export default function EventDetail() {
               {event.difficulty}
             </span>
           </div>
+          <div className="position-absolute top-0 end-0 m-3 d-flex gap-2">
+            <h2 className="fw-bold text-secondary">{weather + " C"} </h2>
+          </div>
 
           <div className="position-absolute bottom-0 end-0 m-3 text-end">
-            <h1 className="fw-bold h2 mb-1">{event.title}</h1>
+            <h1 className="fw-bold  ">{event.title}</h1>
           </div>
         </div>
 
@@ -288,7 +293,9 @@ export default function EventDetail() {
                   Date & Time
                 </small>
 
-                <span className="fw-semibold text-dark">{event.date}</span>
+                <span className="fw-semibold text-dark">
+                  {event.date} {event.time && "at " + event.time}
+                </span>
               </div>
             </div>
 
