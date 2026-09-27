@@ -18,6 +18,7 @@ export default function CreateEvent() {
     longitude: null,
     location: "",
     date: "",
+    time: "",
     difficulty: "easy",
     maxHeadcount: 5,
     description: "",
@@ -34,6 +35,7 @@ export default function CreateEvent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Handle normal input changes
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -46,8 +48,8 @@ export default function CreateEvent() {
     const query = e.target.value;
 
     // Update address field
-    setForm((e) => ({
-      ...e,
+    setForm((prev) => ({
+      ...prev,
       address: query,
       latitude: null,
       longitude: null,
@@ -84,6 +86,12 @@ export default function CreateEvent() {
     // Make sure an address was selected
     if (form.latitude === null || form.longitude === null) {
       setError("Please select an address from the suggestions.");
+      return;
+    }
+
+    // Make sure time is selected
+    if (!form.time) {
+      setError("Please select an event time.");
       return;
     }
 
@@ -229,7 +237,7 @@ export default function CreateEvent() {
           />
         </div>
 
-        {/* Date + Max Attendees */}
+        {/* Date + Time */}
         <div className="row g-2">
           <div className="col">
             <label className="form-label">Date</label>
@@ -245,18 +253,32 @@ export default function CreateEvent() {
           </div>
 
           <div className="col">
-            <label className="form-label">Max Attendees</label>
+            <label className="form-label">Time</label>
 
             <input
-              name="maxHeadcount"
-              type="number"
-              min="1"
-              value={form.maxHeadcount}
+              name="time"
+              type="time"
               className="form-control"
+              value={form.time}
               onChange={handleChange}
               required
             />
           </div>
+        </div>
+
+        {/* Max Attendees */}
+        <div>
+          <label className="form-label">Max Attendees</label>
+
+          <input
+            name="maxHeadcount"
+            type="number"
+            min="1"
+            value={form.maxHeadcount}
+            className="form-control"
+            onChange={handleChange}
+            required
+          />
         </div>
 
         {/* Activity + Difficulty */}
@@ -271,11 +293,8 @@ export default function CreateEvent() {
               onChange={handleChange}
             >
               <option value="hiking">Hiking</option>
-
               <option value="running">Running</option>
-
               <option value="cycling">Cycling</option>
-
               <option value="swimming">Swimming</option>
             </select>
           </div>
@@ -290,9 +309,7 @@ export default function CreateEvent() {
               onChange={handleChange}
             >
               <option value="easy">Easy</option>
-
               <option value="moderate">Moderate</option>
-
               <option value="hard">Hard</option>
             </select>
           </div>

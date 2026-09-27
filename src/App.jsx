@@ -12,7 +12,8 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 
 export default function App() {
   const { user } = useAuth();
-  console.log("this is user", user);
+
+  // console.log("this is user", user);
   return (
     <>
       <BrowserRouter>

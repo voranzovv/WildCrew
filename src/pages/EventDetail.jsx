@@ -15,6 +15,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import Map from "../Components/Map";
+import { getWeather } from "../helpers/weatherHelpers";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -27,6 +28,16 @@ export default function EventDetail() {
   const [requesting, setRequesting] = useState(false);
   const [message, setMessage] = useState("");
   const [liked, setLiked] = useState(false);
+
+  useEffect(() => {
+    getWeather(43.7064, -79.3986, "2026-09-25")
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   // Load event
   useEffect(() => {
@@ -43,6 +54,15 @@ export default function EventDetail() {
       } catch (err) {
         console.error("Error loading event:", err);
       } finally {
+        if (event) {
+          getWeather(event.latitude, event.longitude, event.date)
+            .then((data) => {
+              console.log(data);
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        }
         setLoading(false);
       }
     };
@@ -289,6 +309,30 @@ export default function EventDetail() {
           >
             {event.description}
           </p>
+          {/* participants */}
+          {event?.participants && (
+            <div className="mb-4">
+              <h5 className="fw-bold mb-2">Participants</h5>
+              <div className="d-flex flex-wrap gap-2">
+                {event.participants.map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="d-flex align-items-center gap-2"
+                  >
+                    <img
+                      src={participant.photoURL}
+                      alt={participant.displayName}
+                      className="rounded-circle"
+                      width={38}
+                      height={38}
+                      style={{ objectFit: "cover" }}
+                    />
+                    <span>{participant.displayName}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Gallery Section */}
           {event.gallery && event.gallery.length > 0 && (

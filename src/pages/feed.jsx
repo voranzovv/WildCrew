@@ -18,7 +18,7 @@ export default function Feed() {
   useEffect(() => {
     const d = new Date();
 
-    console.log("date full", d);
+    // console.log("date full", d);
 
     const today = d.toISOString().split("T")[0];
 

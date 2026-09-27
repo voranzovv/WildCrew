@@ -11,11 +11,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("this is children", children);
-    console.log("serverTimestamp", serverTimestamp()); // this will not work, this will only work inside firebase function.
+    // console.log("this is children", children);
+    // console.log("serverTimestamp", serverTimestamp()); // this will not work, this will only work inside firebase function.
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       // Check if they exist in Firestore
-      console.log(firebaseUser);
+      // console.log(firebaseUser);
       if (firebaseUser) {
         const userRef = doc(db, "users", firebaseUser.uid);
         const snap = await getDoc(userRef);
