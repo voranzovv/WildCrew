@@ -29,16 +29,6 @@ export default function EventDetail() {
   const [message, setMessage] = useState("");
   const [liked, setLiked] = useState(false);
 
-  useEffect(() => {
-    getWeather(43.7064, -79.3986, "2026-09-25")
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
-
   // Load event
   useEffect(() => {
     const loadEvent = async () => {
@@ -46,23 +36,38 @@ export default function EventDetail() {
         const snap = await getDoc(doc(db, "events", id));
 
         if (snap.exists()) {
+          // Check if the document exists
           setEvent({
             id: snap.id,
             ...snap.data(),
           });
+          if (snap.data().latitude && snap.data().longitude) {
+            getWeather(
+              snap.data().latitude,
+              snap.data().longitude,
+              snap.data().date,
+              snap.data().time,
+            )
+              .then((data) => {
+                console.log(data);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+          }
         }
       } catch (err) {
         console.error("Error loading event:", err);
       } finally {
-        if (event) {
-          getWeather(event.latitude, event.longitude, event.date)
-            .then((data) => {
-              console.log(data);
-            })
-            .catch((error) => {
-              console.error(error);
-            });
-        }
+        // if (event) {
+        //   getWeather(event.latitude, event.longitude, event.date)
+        //     .then((data) => {
+        //       console.log(data.hourly.temperature_2m[0]);
+        //     })
+        //     .catch((error) => {
+        //       console.error(error);
+        //     });
+        // }
         setLoading(false);
       }
     };
